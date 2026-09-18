@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>드립커피 & 에어로프레스 레시피 스튜디오</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        coffee: {
+                            50: '#fdfbf7',
+                            100: '#f7f2e9',
+                            200: '#eee2d0',
+                            300: '#e0caa8',
+                            400: '#ceab7a',
+                            500: '#bd8f52',
+                            600: '#a67341',
+                            700: '#885836',
+                            800: '#6f4830',
+                            900: '#5b3d2a',
+                            950: '#321f15',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts & Lucide Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #12100e;
+            color: #f7f2e9;
+        }
+
+        /* Circular Progress Animation */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s ease-in-out, stroke 0.3s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Glassmorphism effects */
+        .glass-panel {
+            background: rgba(30, 25, 22, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 202, 168, 0.12);
+        }
+
+        .glass-card {
+            background: rgba(42, 35, 30, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(224, 202, 168, 0.08);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(206, 171, 122, 0.35);
+            transform: translateY(-2px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1614;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #44352b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a67341;
+        }
+
+        /* Pulse glow animation for active timer */
+        @keyframes coffee-pulse {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        .timer-active-glow {
+            animation: coffee-pulse 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-stone-950 text-stone-100 antialiased selection:bg-coffee-600 selection:text-white">
+
+    <header class="sticky top-0 z-40 glass-panel border-b border-stone-800/80 px-4 py-3 sm:px-6">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-coffee-500 to-coffee-800 flex items-center justify-center shadow-lg shadow-coffee-900/50">
+                        <i data-lucide="coffee" class="w-5 h-5 text-amber-100"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-extrabold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-stone-100 via-coffee-200 to-coffee-400 bg-clip-text text-transparent">
+                            레시피 스튜디오
+                        </h1>
+                        <p class="text-xs text-stone-400">드립커피 & 에어로프레스 타이머</p>
+                    </div>
+                </div>
+
+                <!-- Random Recipe Suggestion Button (Mobile Top Right) -->
+                <button id="btn-random-recipe" onclick="pickRandomRecipe()" class="sm:hidden flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-coffee-600/30 text-coffee-300 border border-coffee-500/30 hover:bg-coffee-600 hover:text-white transition">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    <span>오늘의 추천</span>
+                </button>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex items-center gap-1 bg-stone-900/90 p-1 rounded-xl border border-stone-800/80 w-full sm:w-auto overflow-x-auto text-xs sm:text-sm">
+                <button onclick="switchTab('explore')" id="tab-btn-explore" class="tab-btn active flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition text-stone-300 hover:text-white">
+                    <i data-lucide="compass" class="w-4 h-4"></i>
+                    <span>레시피 탐색</span>
+                </button>
+                <button onclick="switchTab('timer')" id="tab-btn-timer" class="tab-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition text-stone-300 hover:text-white">
+                    <i data-lucide="timer" class="w-4 h-4"></i>
+                    <span>추출 타이머</span>
+                </button>
+                <button onclick="switchTab('grinder')" id="tab-btn-grinder" class="tab-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition text-stone-300 hover:text-white">
+                    <i data-lucide="sliders" class="w-4 h-4"></i>
+                    <span>그라인더 계산기</span>
+                </button>
+                <button onclick="switchTab('journal')" id="tab-btn-journal" class="tab-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition text-stone-300 hover:text-white">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                    <span>시음 노트</span>
+                </button>
+                <button onclick="switchTab('builder')" id="tab-btn-builder" class="tab-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition text-stone-300 hover:text-white">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span>커스텀 작성</span>
+                </button>
+            </nav>
+
+            <!-- Random Recipe Button (Desktop) -->
+            <button onclick="pickRandomRecipe()" class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-coffee-600 to-coffee-700 text-stone-100 hover:from-coffee-500 hover:to-coffee-600 shadow-md shadow-coffee-950/40 border border-coffee-400/20 transition active:scale-95">
+                <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+                <span>오늘의 추천 레시피</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: RECIPE EXPLORER -->
+        <section id="tab-explore" class="tab-content space-y-6">
+            <!-- Search & Filter Ribbon -->
+            <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between glass-panel p-4 rounded-2xl">
+                <!-- Category Filter Buttons -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none" id="category-filter-container">
+                    <!-- Dynamic Buttons Generated in JS -->
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative w-full md:w-72">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></i>
+                    <input type="text" id="recipe-search-input" oninput="filterRecipes()" placeholder="레시피, 바리스타, 태그 검색..." class="w-full bg-stone-900/80 text-xs sm:text-sm rounded-xl pl-9 pr-4 py-2 border border-stone-800 focus:outline-none focus:border-coffee-500 text-stone-200 placeholder-stone-500">
+                </div>
+            </div>
+
+            <!-- Recipe Badge Filter Ribbon -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs" id="badge-filter-container">
+                <span class="text-stone-400 font-medium shrink-0 flex items-center gap-1">
+                    <i data-lucide="tag" class="w-3.5 h-3.5"></i> 태그 필터:
+                </span>
+                <!-- Badge chips inserted via JS -->
+            </div>
+
+            <!-- Recipe Grid -->
+            <div id="recipe-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Dynamic Recipe Cards -->
+            </div>
+        </section>
+
+        <!-- TAB 2: BREW TIMER STUDIO -->
+        <section id="tab-timer" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Scaler & Recipe Summary -->
+                <div class="lg:col-span-5 glass-panel p-5 sm:p-6 rounded-3xl flex flex-col justify-between space-y-6">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span id="timer-recipe-method" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-coffee-900/80 text-coffee-300 border border-coffee-700/50">
+                                추출방식
+                            </span>
+                            <div class="flex items-center gap-2 text-xs text-stone-400">
+                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                <span id="timer-recipe-author">원작자</span>
+                            </div>
+                        </div>
+
+                        <h2 id="timer-recipe-title" class="text-2xl font-bold text-stone-100 mb-2">
+                            레시피를 선택해주세요
+                        </h2>
+                        <p id="timer-recipe-desc" class="text-xs sm:text-sm text-stone-400 leading-relaxed mb-6">
+                            레시피 탐색 탭에서 원하시는 추출법을 선택해 타이머에 로드하세요.
+                        </p>
+
+                        <!-- Dynamic Dosage & Ratio Scaler -->
+                        <div class="bg-stone-900/90 rounded-2xl p-4 border border-stone-800/80 space-y-4">
+                            <div class="flex items-center justify-between border-b border-stone-800 pb-3">
+                                <span class="text-xs font-bold text-coffee-400 uppercase tracking-wider flex items-center gap-1">
+                                    <i data-lucide="scale" class="w-4 h-4"></i> 용량 실시간 계산 (Scaler)
+                                </span>
+                                <button onclick="resetScaling()" class="text-[11px] text-stone-400 hover:text-coffee-300 underline">
+                                    기본값 리셋
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-stone-400 mb-1">원두 양 (g)</label>
+                                    <div class="flex items-center bg-stone-950 rounded-xl border border-stone-800 px-3 py-1.5 focus-within:border-coffee-500">
+                                        <input type="number" id="scale-coffee-input" oninput="updateRecipeScaling()" min="5" max="100" step="0.5" value="15" class="w-full bg-transparent text-sm font-bold text-stone-100 focus:outline-none">
+                                        <span class="text-xs text-stone-500">g</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-stone-400 mb-1">추출 비율 (Ratio)</label>
+                                    <div class="flex items-center bg-stone-950 rounded-xl border border-stone-800 px-3 py-1.5 focus-within:border-coffee-500">
+                                        <span class="text-xs text-stone-500 mr-1">1 :</span>
+                                        <input type="number" id="scale-ratio-input" oninput="updateRecipeScaling()" min="1" max="30" step="0.1" value="15" class="w-full bg-transparent text-sm font-bold text-stone-100 focus:outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Calculated Result Banner -->
+                            <div class="grid grid-cols-3 gap-2 pt-1 text-center">
+                                <div class="p-2 bg-stone-950/60 rounded-xl">
+                                    <div class="text-[10px] text-stone-400">총 물 양</div>
+                                    <div id="scaled-total-water" class="text-sm font-extrabold text-amber-400">225g</div>
+                                </div>
+                                <div class="p-2 bg-stone-950/60 rounded-xl">
+                                    <div class="text-[10px] text-stone-400">권장 온도</div>
+                                    <div id="scaled-temp" class="text-sm font-extrabold text-coffee-300">92°C</div>
+                                </div>
+                                <div class="p-2 bg-stone-950/60 rounded-xl">
+                                    <div class="text-[10px] text-stone-400">분쇄 목표</div>
+                                    <div id="scaled-micron" class="text-sm font-extrabold text-stone-200">750µm</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audio Controls & TTS Settings -->
+                    <div class="bg-stone-900/60 rounded-2xl p-3.5 border border-stone-800/60 space-y-2">
+                        <div class="text-xs font-semibold text-stone-300 flex items-center justify-between">
+                            <span class="flex items-center gap-1.5">
+                                <i data-lucide="volume-2" class="w-4 h-4 text-coffee-400"></i> 음성 & 알림 사운드
+                            </span>
+                            <button onclick="testAudio()" class="text-[10px] px-2 py-0.5 rounded bg-stone-800 hover:bg-stone-700 text-stone-300">
+                                음성 테스트
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between text-xs pt-1">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="toggle-voice" checked class="accent-coffee-500 rounded w-4 h-4">
+                                <span class="text-stone-300">한국어 음성 안내 (TTS)</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="toggle-sound" checked class="accent-coffee-500 rounded w-4 h-4">
+                                <span class="text-stone-300">단계 효과음</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Interactive Circular Timer Display -->
+                <div class="lg:col-span-7 glass-panel p-6 sm:p-8 rounded-3xl flex flex-col items-center justify-center relative min-h-[460px]">
+                    
+                    <!-- Circular SVG Countdown Ring -->
+                    <div class="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center my-4">
+                        <svg class="w-full h-full" viewBox="0 0 200 200">
+                            <!-- Background track -->
+                            <circle cx="100" cy="100" r="88" fill="none" stroke="#26201c" stroke-width="12" />
+                            <!-- Active progress bar -->
+                            <circle id="timer-progress-circle" class="progress-ring__circle" cx="100" cy="100" r="88" fill="none" stroke="#d97706" stroke-width="12" stroke-dasharray="552.92" stroke-dashoffset="0" stroke-linecap="round" />
+                        </svg>
+
+                        <!-- Center Time Content -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                            <span id="timer-step-badge" class="px-3 py-1 rounded-full bg-coffee-950 text-coffee-300 border border-coffee-800 text-xs font-semibold mb-1">
+                                준비 단계
+                            </span>
+                            <div id="timer-main-clock" class="text-4xl sm:text-5xl font-black tracking-tight text-white font-mono my-1">
+                                00:00
+                            </div>
+                            <div class="text-xs text-stone-400 mt-1 flex items-center gap-1">
+                                <span>총 남은시간:</span>
+                                <span id="timer-total-remaining" class="font-bold text-stone-200">00:00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step Instruction Overlay Card -->
+                    <div class="w-full bg-stone-900/90 border border-stone-800 rounded-2xl p-4 my-2 text-center shadow-lg">
+                        <div class="text-xs font-semibold text-coffee-400 mb-1 flex items-center justify-center gap-1.5" id="timer-step-title">
+                            <i data-lucide="droplet" class="w-4 h-4"></i> <span>1단계: 뜸들이기 (Bloom)</span>
+                        </div>
+                        <div id="timer-step-water-target" class="text-lg font-extrabold text-amber-300 my-1">
+                            물 40g 붓기 (누적 40g)
+                        </div>
+                        <p id="timer-step-instruction" class="text-xs text-stone-300 leading-normal">
+                            골고루 수분을 공급하고 45초간 이산화탄소를 배출시킵니다.
+                        </p>
+                    </div>
+
+                    <!-- Flow Guidance Progress Bar -->
+                    <div class="w-full space-y-1.5 mb-6">
+                        <div class="flex justify-between text-xs text-stone-400">
+                            <span>전체 누적 추출량 진행률</span>
+                            <span id="timer-water-progress-text" class="font-semibold text-coffee-300">0g / 225g</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-stone-900 rounded-full overflow-hidden border border-stone-800">
+                            <div id="timer-water-bar" class="h-full bg-gradient-to-r from-coffee-600 to-amber-500 w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+
+                    <!-- Control Buttons Row -->
+                    <div class="flex items-center gap-3 w-full max-w-md">
+                        <button onclick="prevStep()" class="p-3 rounded-2xl bg-stone-900 hover:bg-stone-800 text-stone-300 border border-stone-800 transition active:scale-95" title="이전 단계">
+                            <i data-lucide="skip-back" class="w-5 h-5"></i>
+                        </button>
+
+                        <button id="btn-timer-main" onclick="toggleTimer()" class="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-coffee-600 to-amber-600 hover:from-coffee-500 hover:to-amber-500 text-white font-extrabold text-base shadow-xl shadow-coffee-950/60 flex items-center justify-center gap-2 transition active:scale-95">
+                            <i id="btn-timer-icon" data-lucide="play" class="w-5 h-5 fill-current"></i>
+                            <span id="btn-timer-text">추출 시작</span>
+                        </button>
+
+                        <button onclick="nextStep()" class="p-3 rounded-2xl bg-stone-900 hover:bg-stone-800 text-stone-300 border border-stone-800 transition active:scale-95" title="다음 단계 패스">
+                            <i data-lucide="skip-forward" class="w-5 h-5"></i>
+                        </button>
+
+                        <button onclick="resetTimer()" class="p-3 rounded-2xl bg-stone-900 hover:bg-stone-800 text-red-400 border border-stone-800 transition active:scale-95" title="리셋">
+                            <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Log Tasting Button (Triggers Modal or Journal Switch) -->
+                    <button onclick="openQuickLogModal()" class="mt-4 text-xs font-semibold text-coffee-400 hover:text-coffee-300 underline flex items-center gap-1">
+                        <i data-lucide="file-plus" class="w-3.5 h-3.5"></i> 이 추출 기록을 시음 노트에 저장하기
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: FEMOBOOK & POPULAR GRINDER MICROMETER CONVERTER -->
+        <section id="tab-grinder" class="tab-content hidden space-y-6">
+            <div class="glass-panel p-6 sm:p-8 rounded-3xl space-y-8">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2.5 py-0.5 rounded-full bg-coffee-900/80 text-coffee-300 text-xs font-bold border border-coffee-700/50">
+                            MICROMETER CALCULATOR
+                        </span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-stone-100">그라인더 분쇄도 마이크로미터(µm) 변환기</h2>
+                    </div>
+                    <p class="text-xs sm:text-sm text-stone-400 leading-relaxed">
+                        **Femobook A2** (1클릭 = 18µm, 40클릭 = 1회전 = 720µm)를 비롯하여 코만단테 C40, 타임모어 C2/C3, 바라짜 엔코어, 펠로우 오드 2, EK43 간의 분쇄 입자 크기를 상호 환산합니다.
+                    </p>
+                </div>
+
+                <!-- Interactive Micrometer Slider Controller -->
+                <div class="bg-stone-900/90 p-6 rounded-2xl border border-stone-800 space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <span class="text-xs text-stone-400 block mb-1">목표 분쇄 입자 크기 (Target Particle Size)</span>
+                            <div class="flex items-baseline gap-2">
+                                <span id="calc-micron-display" class="text-3xl font-black text-amber-400">750</span>
+                                <span class="text-sm font-semibold text-stone-300">µm (마이크로미터)</span>
+                            </div>
+                        </div>
+
+                        <!-- Quick Preset Buttons -->
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="setMicronPreset(300)" class="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-coffee-900 text-stone-300 text-xs transition">에스프레소 (300µm)</button>
+                            <button onclick="setMicronPreset(550)" class="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-coffee-900 text-stone-300 text-xs transition">에어로프레스 (550µm)</button>
+                            <button onclick="setMicronPreset(750)" class="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-coffee-900 text-stone-300 text-xs transition">핸드드립 V60 (750µm)</button>
+                            <button onclick="setMicronPreset(900)" class="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-coffee-900 text-stone-300 text-xs transition">케멕스/프렌치프레스 (900µm)</button>
+                        </div>
+                    </div>
+
+                    <!-- Range Slider -->
+                    <input type="range" id="grinder-range-input" min="150" max="1200" step="10" value="750" oninput="onGrinderSliderChange(this.value)" class="w-full accent-coffee-500 bg-stone-950 h-3 rounded-lg cursor-pointer">
+
+                    <!-- Visual Particle Scale Spectrum -->
+                    <div class="flex justify-between text-[11px] text-stone-500 font-medium">
+                        <span>초극세 (150µm)</span>
+                        <span>에스프레소 (300µm)</span>
+                        <span>모카포트 (450µm)</span>
+                        <span>드립/V60 (750µm)</span>
+                        <span>침출/케멕스 (950µm)</span>
+                        <span>극조세 (1200µm)</span>
+                    </div>
+                </div>
+
+                <!-- Grinder Result Cards Matrix -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Femobook A2 Card (Featured) -->
+                    <div class="p-5 rounded-2xl bg-gradient-to-br from-coffee-950 via-stone-900 to-stone-900 border-2 border-coffee-500/50 shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-coffee-600 text-[10px] font-bold px-2.5 py-0.5 rounded-bl-lg text-white">
+                            메인 레퍼런스
+                        </div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <i data-lucide="disc" class="w-5 h-5 text-amber-400"></i>
+                            <h3 class="font-extrabold text-stone-100 text-base">Femobook A2</h3>
+                        </div>
+                        <div class="text-xs text-stone-400 mb-2">1클릭 = 18µm | 40클릭 = 1회전 (720µm)</div>
+                        <div id="res-femobook" class="text-2xl font-black text-amber-300 my-1">
+                            1회전 2클릭 (42클릭)
+                        </div>
+                        <p class="text-[11px] text-stone-400">
+                            40클릭당 1회전 다이얼 회전 계산 적용
+                        </p>
+                    </div>
+
+                    <!-- Comandante C40 -->
+                    <div class="p-5 rounded-2xl bg-stone-900 border border-stone-800">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="coffee" class="w-4 h-4 text-coffee-400"></i>
+                            <h3 class="font-bold text-stone-200 text-sm">Comandante C40 (Red Clix off)</h3>
+                        </div>
+                        <div class="text-xs text-stone-500 mb-2">1클릭 ≈ 30µm</div>
+                        <div id="res-comandante" class="text-xl font-bold text-stone-100 my-1">
+                            25 클릭
+                        </div>
+                        <p class="text-[11px] text-stone-500">영점(Zero point) 기준 클릭수</p>
+                    </div>
+
+                    <!-- Timemore C2/C3 -->
+                    <div class="p-5 rounded-2xl bg-stone-900 border border-stone-800">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="sliders" class="w-4 h-4 text-coffee-400"></i>
+                            <h3 class="font-bold text-stone-200 text-sm">Timemore C2 / C3</h3>
+                        </div>
+                        <div class="text-xs text-stone-500 mb-2">1클릭 ≈ 22µm</div>
+                        <div id="res-timemore" class="text-xl font-bold text-stone-100 my-1">
+                            34 클릭
+                        </div>
+                        <p class="text-[11px] text-stone-500">완전 조임 기준 클릭 계산</p>
+                    </div>
+
+                    <!-- Baratza Encore -->
+                    <div class="p-5 rounded-2xl bg-stone-900 border border-stone-800">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-coffee-400"></i>
+                            <h3 class="font-bold text-stone-200 text-sm">Baratza Encore</h3>
+                        </div>
+                        <div class="text-xs text-stone-500 mb-2">1단 계단 ≈ 20µm</div>
+                        <div id="res-encore" class="text-xl font-bold text-stone-100 my-1">
+                            18~20 단
+                        </div>
+                        <p class="text-[11px] text-stone-500">전동 그라인더 노브 눈금 설정</p>
+                    </div>
+
+                    <!-- Fellow Ode Gen 2 -->
+                    <div class="p-5 rounded-2xl bg-stone-900 border border-stone-800">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="box" class="w-4 h-4 text-coffee-400"></i>
+                            <h3 class="font-bold text-stone-200 text-sm">Fellow Ode Gen 2</h3>
+                        </div>
+                        <div class="text-xs text-stone-500 mb-2">1미세클릭 ≈ 16.6µm (범위: 1.0~11.0)</div>
+                        <div id="res-ode2" class="text-xl font-bold text-stone-100 my-1">
+                            5.1 다이얼
+                        </div>
+                        <p class="text-[11px] text-stone-500">버(Burr) 간격 교정 기준</p>
+                    </div>
+
+                    <!-- Mahlkönig EK43 -->
+                    <div class="p-5 rounded-2xl bg-stone-900 border border-stone-800">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="target" class="w-4 h-4 text-coffee-400"></i>
+                            <h3 class="font-bold text-stone-200 text-sm">Mahlkönig EK43</h3>
+                        </div>
+                        <div class="text-xs text-stone-500 mb-2">1숫자 ≈ 35µm 변량</div>
+                        <div id="res-ek43" class="text-xl font-bold text-stone-100 my-1">
+                            8.5 설정
+                        </div>
+                        <p class="text-[11px] text-stone-500">커머셜 플랫버 레퍼런스 환산</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: TASTING LOG JOURNAL -->
+        <section id="tab-journal" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl">
+                <div>
+                    <h2 class="text-2xl font-bold text-stone-100 mb-1">커피 시음 노트 저널 (Tasting Log)</h2>
+                    <p class="text-xs sm:text-sm text-stone-400">나만의 추출 레시피와 세부 맛 평가(산미, 단맛, 바디감 등)를 브라우저에 안전하게 저장합니다.</p>
+                </div>
+                <button onclick="openNewJournalModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-coffee-600 to-coffee-700 hover:from-coffee-500 hover:to-coffee-600 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-1.5 transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i> 새 시음 노트 작성
+                </button>
+            </div>
+
+            <!-- Journal Entry List -->
+            <div id="journal-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Dynamic Logs render here -->
+            </div>
+        </section>
+
+        <!-- TAB 5: CUSTOM RECIPE CREATOR -->
+        <section id="tab-builder" class="tab-content hidden space-y-6">
+            <div class="glass-panel p-6 sm:p-8 rounded-3xl space-y-6 max-w-3xl mx-auto">
+                <div>
+                    <h2 class="text-2xl font-bold text-stone-100 mb-1">커스텀 추출 레시피 제작</h2>
+                    <p class="text-xs sm:text-sm text-stone-400">단계별 시간과 물 투입량을 설정하여 나만의 시그니처 레시피를 등록하세요.</p>
+                </div>
+
+                <form id="custom-recipe-form" onsubmit="saveCustomRecipe(event)" class="space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-300 mb-1">레시피 이름 *</label>
+                            <input type="text" id="builder-title" required placeholder="예: 봄빛 밝은 에어로프레스 레시피" class="w-full bg-stone-900 border border-stone-800 rounded-xl px-3.5 py-2 text-sm text-stone-100 focus:outline-none focus:border-coffee-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-300 mb-1">바리스타 / 작성자 *</label>
+                            <input type="text" id="builder-author" required placeholder="예: 바리스타 김드립" class="w-full bg-stone-900 border border-stone-800 rounded-xl px-3.5 py-2 text-sm text-stone-100 focus:outline-none focus:border-coffee-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-300 mb-1">추출 방식</label>
+                            <select id="builder-method" class="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none focus:border-coffee-500">
+                                <option value="에어로프레스">에어로프레스</option>
+                                <option value="V60">V60</option>
+                                <option value="칼리타">칼리타</option>
+                                <option value="케멕스">케멕스</option>
+                                <option value="침출식">침출식</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-300 mb-1">원두 양 (g)</label>
+                            <input type="number" id="builder-coffee" required min="5" max="100" value="18" class="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none focus:border-coffee-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-300 mb-1">물 온도 (°C)</label>
+                            <input type="number" id="builder-temp" required min="70" max="100" value="92" class="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none focus:border-coffee-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-300 mb-1">목표 분쇄도 (µm)</label>
+                            <input type="number" id="builder-micron" required min="150" max="1200" step="10" value="700" class="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none focus:border-coffee-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-300 mb-1">설명 및 특이사항</label>
+                        <textarea id="builder-desc" rows="2" placeholder="레시피의 가공 방식 적합성이나 교반 테크닉을 적어주세요." class="w-full bg-stone-900 border border-stone-800 rounded-xl p-3 text-xs text-stone-100 focus:outline-none focus:border-coffee-500"></textarea>
+                    </div>
+
+                    <!-- Builder Dynamic Step Builder -->
+                    <div class="space-y-3 pt-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-coffee-400 uppercase tracking-wider">단계별 스텝 설정</span>
+                            <button type="button" onclick="addBuilderStep()" class="px-3 py-1 rounded-lg bg-coffee-900/60 hover:bg-coffee-800 text-coffee-200 text-xs border border-coffee-700/50 flex items-center gap-1">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i> 단계 추가
+                            </button>
+                        </div>
+
+                        <div id="builder-steps-container" class="space-y-2">
+                            <!-- Dynamic Step Rows inserted here -->
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end gap-3 border-t border-stone-800">
+                        <button type="button" onclick="switchTab('explore')" class="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 text-xs font-semibold">
+                            취소
+                        </button>
+                        <button type="submit" class="px-6 py-2 rounded-xl bg-gradient-to-r from-coffee-600 to-amber-600 hover:from-coffee-500 hover:to-amber-500 text-white text-xs font-bold shadow-lg">
+                            레시피 저장하기
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- NEW JOURNAL ENTRY MODAL -->
+    <div id="journal-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-lg rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto border border-stone-800">
+            <div class="flex items-center justify-between border-b border-stone-800 pb-3">
+                <h3 class="text-lg font-bold text-stone-100 flex items-center gap-2">
+                    <i data-lucide="notebook-pen" class="w-5 h-5 text-coffee-400"></i> 새 시음 노트 기록
+                </h3>
+                <button onclick="closeJournalModal()" class="text-stone-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="journal-form" onsubmit="saveJournalEntry(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-medium text-stone-300 mb-1">사용 원두 정보 (원산지/프로세싱)</label>
+                    <input type="text" id="log-bean" required placeholder="예: 에티오피아 예가체프 아리차 워시드" class="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 focus:outline-none focus:border-coffee-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-stone-300 mb-1">사용한 레시피</label>
+                        <input type="text" id="log-recipe-name" placeholder="예: James Hoffmann V60" class="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-stone-300 mb-1">총 별점 (Rating)</label>
+                        <select id="log-rating" class="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 focus:outline-none">
+                            <option value="5">⭐⭐⭐⭐⭐ (5.0 - 완벽함)</option>
+                            <option value="4">⭐⭐⭐⭐☆ (4.0 - 우수함)</option>
+                            <option value="3">⭐⭐⭐☆☆ (3.0 - 보통)</option>
+                            <option value="2">⭐⭐☆☆☆ (2.0 - 아쉬움)</option>
+                            <option value="1">⭐☆☆☆☆ (1.0 - 실패)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tasting Sliders -->
+                <div class="bg-stone-900/80 p-3.5 rounded-2xl border border-stone-800/80 space-y-3">
+                    <span class="font-bold text-coffee-300 block">향미 프로파일 (Sensory Profile)</span>
+                    
+                    <div>
+                        <div class="flex justify-between text-stone-400 mb-0.5">
+                            <span>산미 (Acidity)</span>
+                            <span id="val-acidity" class="text-amber-400 font-bold">3</span>
+                        </div>
+                        <input type="range" id="log-acidity" min="1" max="5" value="3" oninput="document.getElementById('val-acidity').innerText=this.value" class="w-full accent-coffee-500 bg-stone-950 h-2 rounded">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-stone-400 mb-0.5">
+                            <span>단맛 (Sweetness)</span>
+                            <span id="val-sweetness" class="text-amber-400 font-bold">3</span>
+                        </div>
+                        <input type="range" id="log-sweetness" min="1" max="5" value="3" oninput="document.getElementById('val-sweetness').innerText=this.value" class="w-full accent-coffee-500 bg-stone-950 h-2 rounded">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-stone-400 mb-0.5">
+                            <span>바디감 (Body)</span>
+                            <span id="val-body" class="text-amber-400 font-bold">3</span>
+                        </div>
+                        <input type="range" id="log-body" min="1" max="5" value="3" oninput="document.getElementById('val-body').innerText=this.value" class="w-full accent-coffee-500 bg-stone-950 h-2 rounded">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-medium text-stone-300 mb-1">상세 시음 테이스팅 노트</label>
+                    <textarea id="log-notes" rows="3" placeholder="자스민의 아로마, 화사한 시트러스 산미와 깔끔한 클린컵..." class="w-full bg-stone-900 border border-stone-800 rounded-xl p-2.5 text-stone-100 focus:outline-none focus:border-coffee-500"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeJournalModal()" class="px-4 py-2 rounded-xl bg-stone-800 text-stone-300">취소</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-coffee-600 hover:bg-coffee-500 text-white font-bold">저장하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-stone-800/80 py-6 text-center text-xs text-stone-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>© 레시피 스튜디오 - GitHub Pages ready Single File Web App</span>
+            <span class="flex items-center gap-1">
+                <i data-lucide="coffee" class="w-3.5 h-3.5 text-coffee-500"></i> 맛있고 정교한 드립커피를 위한 무료 오픈소스
+            </span>
+        </div>
+    </footer>
+
+    <script>
+        /* ==========================================================================
+           1. DATA STRUCTURES & PRELOADED WORLD-FAMOUS RECIPES
+           ========================================================================== */
+        const PRELOADED_RECIPES = [
+            {
+                id: 'tuomas-merikanto-2019',
+                title: '투오마스 메리카토 챔피언십 에어로프레스',
+                author: 'Tuomas Merikanto (2019 WAC Champion)',
+                method: '에어로프레스',
+                baseCoffeeGrams: 30,
+                baseWaterGrams: 100,
+                bypassWaterGrams: 120,
+                temp: 84,
+                targetMicron: 900,
+                tags: ['#에어로프레스', '#챔피언십', '#인버티드', '#바이패스', '#라이트로스트'],
+                description: '2019 월드 에어로프레스 챔피언십 우승 레시피. 고용량 고농도 추출 후 바이패스 물을 섞어 선명하고 화사한 향미를 극대화합니다.',
+                steps: [
+                    { timeSec: 10, waterGrams: 100, instruction: '인버티드 세팅 후 84°C 물 100g을 10초간 빠르고 균일하게 주입합니다.' },
+                    { timeSec: 50, waterGrams: 100, instruction: '스푼이나 스터러로 20초간 강하게 저은 후 1:00까지 대기합니다.' },
+                    { timeSec: 30, waterGrams: 100, instruction: '필터 캡을 체결하고 공기를 뺀 후, 서버에 뒤집어 30초 동안 부드럽게 눌러 추출합니다.' },
+                    { timeSec: 15, waterGrams: 220, instruction: '추출 완료된 커피 원액에 뜨거운 물 120g을 추가(Bypass)하여 희석합니다.' }
+                ]
+            },
+            {
+                id: 'james-hoffmann-v60',
+                title: '제임스 호프만 얼티밋 V60 레시피',
+                author: 'James Hoffmann',
+                method: 'V60',
+                baseCoffeeGrams: 30,
+                baseWaterGrams: 500,
+                bypassWaterGrams: 0,
+                temp: 97,
+                targetMicron: 650,
+                tags: ['#V60', '#스탠다드', '#라이트로스트'],
+                description: '세계적인 커피 거장 제임스 호프만의 표준 V60 수율 최대화 추출 공식입니다.',
+                steps: [
+                    { timeSec: 45, waterGrams: 60, instruction: '60g 물을 붓고 드립퍼를 살짝 회전(Swirl)시켜 수분을 완전 포화시킵니다.' },
+                    { timeSec: 30, waterGrams: 300, instruction: '45초부터 1:15까지 일정한 유량으로 총 300g까지 부어줍니다.' },
+                    { timeSec: 30, waterGrams: 500, instruction: '1:15부터 천천히 부어 최종 500g을 맞춥니다.' },
+                    { timeSec: 30, waterGrams: 500, instruction: '스푼으로 시계방향/반시계방향 1회 저은 후 드립퍼를 부드럽게 회전시킵니다.' },
+                    { timeSec: 75, waterGrams: 500, instruction: '커피 베드가 평평하게 내려갈 때까지 가만히 드로우다운(Drawdown)을 기다립니다.' }
+                ]
+            },
+            {
+                id: 'tetsu-kasuya-46',
+                title: '카스야 테츠 4:6 법칙 V60',
+                author: 'Tetsu Kasuya (2016 WBrC Champion)',
+                method: 'V60',
+                baseCoffeeGrams: 20,
+                baseWaterGrams: 300,
+                bypassWaterGrams: 0,
+                temp: 92,
+                targetMicron: 900,
+                tags: ['#V60', '#4:6법칙', '#챔피언십'],
+                description: '전체 물을 40%와 60% 비율로 나누어 앞쪽은 산미/단맛, 뒤쪽은 농도를 조정하는 정교한 챔피언의 드립법입니다.',
+                steps: [
+                    { timeSec: 45, waterGrams: 50, instruction: '1차 푸어: 50g 붓기 (단맛과 산미의 밸런스 조절).' },
+                    { timeSec: 45, waterGrams: 120, instruction: '2차 푸어: 70g 부어 누적 120g 맞추기.' },
+                    { timeSec: 45, waterGrams: 180, instruction: '3차 푸어: 60g 부어 누적 180g (농도 및 바디감 형성 시작).' },
+                    { timeSec: 45, waterGrams: 240, instruction: '4차 푸어: 60g 부어 누적 240g.' },
+                    { timeSec: 45, waterGrams: 300, instruction: '5차 푸어: 최종 60g을 붓고 완전히 추출이 끝날 때까지 기다립니다.' }
+                ]
+            },
+            {
+                id: 'james-hoffmann-aeropress',
+                title: '제임스 호프만 얼티밋 에어로프레스',
+                author: 'James Hoffmann',
+                method: '에어로프레스',
+                baseCoffeeGrams: 11,
+                baseWaterGrams: 200,
+                bypassWaterGrams: 0,
+                temp: 100,
+                targetMicron: 550,
+                tags: ['#에어로프레스', '#스탠다드'],
+                description: '정립(Standard) 자세를 사용하며, 적은 원두량으로 깔끔하고 일관성 있는 데일리 커핑 테이스트를 구현합니다.',
+                steps: [
+                    { timeSec: 15, waterGrams: 200, instruction: '팔팔 끓는 물 200g을 빠르게 붓습니다.' },
+                    { timeSec: 120, waterGrams: 200, instruction: '플런저를 1cm 정도 살짝 꽂아 진공 상태를 만든 후 2분간 침출시킵니다.' },
+                    { timeSec: 30, waterGrams: 200, instruction: '에어로프레스를 부드럽게 한 바퀴 흔들어주고 30초간 미분 침전을 기다립니다.' },
+                    { timeSec: 30, waterGrams: 200, instruction: '샤- 소리가 날 때까지 아주 부드럽고 가볍게 끝까지 압착합니다.' }
+                ]
+            },
+            {
+                id: 'blue-bottle-signature',
+                title: '블루보틀 시그니처 칼리타 레시피',
+                author: 'Blue Bottle Coffee',
+                method: '칼리타',
+                baseCoffeeGrams: 30,
+                baseWaterGrams: 350,
+                bypassWaterGrams: 0,
+                temp: 93,
+                targetMicron: 750,
+                tags: ['#칼리타', '#스탠다드'],
+                description: '평평한 바닥 형태의 칼리타/블루보틀 드리퍼 특성을 활용한 동심원 추출 방식.',
+                steps: [
+                    { timeSec: 45, waterGrams: 60, instruction: '60g 물로 원심원 패턴 뜸들이기를 진행합니다.' },
+                    { timeSec: 35, waterGrams: 150, instruction: '2차 푸어: 중심에서 밖으로 부드럽게 150g까지 붓습니다.' },
+                    { timeSec: 30, waterGrams: 250, instruction: '3차 푸어: 물 수위가 내려가면 250g까지 붓습니다.' },
+                    { timeSec: 40, waterGrams: 350, instruction: '최종 4차 푸어: 350g을 채우고 완전히 드로우다운시킵니다.' }
+                ]
+            },
+            {
+                id: 'chemex-classic',
+                title: '케멕스 클래식 클린컵 드립',
+                author: 'Chemex Specialist',
+                method: '케멕스',
+                baseCoffeeGrams: 30,
+                baseWaterGrams: 500,
+                bypassWaterGrams: 0,
+                temp: 94,
+                targetMicron: 850,
+                tags: ['#케멕스', '#스탠다드', '#라이트로스트'],
+                description: '두꺼운 케멕스 전용 곡물 필터로 잡미를 완전히 걸러내어 극상의 클린컵과 투명도를 선사합니다.',
+                steps: [
+                    { timeSec: 45, waterGrams: 70, instruction: '70g 물로 뜸들이기. 케멕스 필터 전체가 젖도록 주의합니다.' },
+                    { timeSec: 75, waterGrams: 300, instruction: '천천히 나선형을 그리며 300g까지 스무스하게 붓습니다.' },
+                    { timeSec: 90, waterGrams: 500, instruction: '마지막 500g까지 부어준 후 투명한 추출액 완성을 기다립니다.' }
+                ]
+            }
+        ];
+
+        /* ==========================================================================
+           2. GLOBAL APP STATE
+           ========================================================================== */
+        let state = {
+            activeTab: 'explore',
+            recipes: [],
+            selectedRecipe: null,
+            scaledCoffee: 15,
+            scaledRatio: 15,
+            
+            // Timer state
+            timerRunning: false,
+            timerPaused: false,
+            timerInterval: null,
+            currentStepIdx: 0,
+            stepTimeRemaining: 0,
+            totalTimeRemaining: 0,
+            totalRecipeSecs: 0,
+            
+            // Audio settings
+            speechEnabled: true,
+            soundEnabled: true,
+
+            // Grinder state
+            currentMicron: 750,
+
+            // Custom recipe builder state
+            builderSteps: []
+        };
+
+        /* ==========================================================================
+           3. AUDIO & TTS SYNTHESIS (Web Audio API & SpeechSynthesis)
+           ========================================================================== */
+        function playChime(type = 'step') {
+            if (!state.soundEnabled) return;
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+
+                if (type === 'step') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+                    
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.35);
+                } else if (type === 'finish') {
+                    // Arpeggio chime
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.12);
+                        gain.gain.setValueAtTime(0.25, ctx.currentTime + idx * 0.12);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.6);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(ctx.currentTime + idx * 0.12);
+                        osc.stop(ctx.currentTime + idx * 0.12 + 0.6);
+                    });
+                }
+            } catch (e) {
+                console.warn('Audio play failed:', e);
+            }
+        }
+
+        function speakKorean(text) {
+            if (!state.speechEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); // cancel previous utterances
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 1.05;
+            utterance.pitch = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            const koVoice = voices.find(v => v.lang.includes('ko') || v.lang.includes('KO'));
+            if (koVoice) utterance.voice = koVoice;
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function testAudio() {
+            playChime('step');
+            speakKorean('안녕하세요! 드립커피 레시피 스튜디오 음성 안내입니다.');
+        }
+
+        /* ==========================================================================
+           4. INITIALIZATION & TAB SWITCHING
+           ========================================================================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStoredRecipes();
+            initCategoryFilters();
+            renderRecipeGrid();
+            
+            // Default select first recipe
+            if (state.recipes.length > 0) {
+                loadRecipeToTimer(state.recipes[0]);
+            }
+
+            // Init Grinder calc display
+            updateGrinderCalculations(750);
+
+            // Init Lucide icons
+            lucide.createIcons();
+
+            // Set Speech & Sound toggles
+            document.getElementById('toggle-voice').addEventListener('change', (e) => state.speechEnabled = e.target.checked);
+            document.getElementById('toggle-sound').addEventListener('change', (e) => state.soundEnabled = e.target.checked);
+
+            // Add default builder step
+            addBuilderStep();
+            addBuilderStep();
+        });
+
+        function loadStoredRecipes() {
+            const custom = localStorage.getItem('coffee_studio_custom_recipes');
+            const customList = custom ? JSON.parse(custom) : [];
+            state.recipes = [...PRELOADED_RECIPES, ...customList];
+        }
+
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-coffee-600', 'text-white', 'shadow-md');
+                btn.classList.add('text-stone-300');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-coffee-600', 'text-white', 'shadow-md');
+                activeBtn.classList.remove('text-stone-300');
+            }
+
+            if (tabId === 'journal') renderJournalList();
+            lucide.createIcons();
+        }
+
+        /* ==========================================================================
+           5. RECIPE EXPLORER & SCALING LOGIC
+           ========================================================================== */
+        const CATEGORIES = ['전체', '에어로프레스', 'V60', '칼리타', '케멕스', '침출식'];
+        let activeCategory = '전체';
+        let activeBadgeFilter = null;
+
+        function initCategoryFilters() {
+            const container = document.getElementById('category-filter-container');
+            container.innerHTML = CATEGORIES.map(cat => `
+                <button onclick="setCategoryFilter('${cat}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition ${cat === activeCategory ? 'bg-coffee-600 text-white shadow' : 'bg-stone-900/80 text-stone-400 hover:text-stone-200'}">
+                    ${cat}
+                </button>
+            `).join('');
+
+            // Collect unique badges
+            const badges = [...new Set(state.recipes.flatMap(r => r.tags || []))];
+            const badgeContainer = document.getElementById('badge-filter-container');
+            badgeContainer.innerHTML = `
+                <span class="text-stone-400 font-medium shrink-0 flex items-center gap-1">
+                    <i data-lucide="tag" class="w-3.5 h-3.5"></i> 태그 필터:
+                </span>
+                <button onclick="setBadgeFilter(null)" class="px-2 py-0.5 rounded-md text-[11px] ${activeBadgeFilter === null ? 'bg-coffee-900 text-coffee-300 font-bold' : 'bg-stone-900 text-stone-400'}">전체보기</button>
+                ${badges.map(b => `
+                    <button onclick="setBadgeFilter('${b}')" class="px-2 py-0.5 rounded-md text-[11px] ${activeBadgeFilter === b ? 'bg-coffee-900 text-coffee-300 font-bold border border-coffee-700' : 'bg-stone-900 text-stone-400 hover:bg-stone-800'}">
+                        ${b}
+                    </button>
+                `).join('')}
+            `;
+        }
+
+        function setCategoryFilter(cat) {
+            activeCategory = cat;
+            initCategoryFilters();
+            filterRecipes();
+        }
+
+        function setBadgeFilter(badge) {
+            activeBadgeFilter = badge;
+            initCategoryFilters();
+            filterRecipes();
+        }
+
+        function filterRecipes() {
+            const searchVal = document.getElementById('recipe-search-input').value.toLowerCase();
+            const grid = document.getElementById('recipe-grid');
+
+            const filtered = state.recipes.filter(r => {
+                const matchCat = activeCategory === '전체' || r.method === activeCategory;
+                const matchBadge = !activeBadgeFilter || (r.tags && r.tags.includes(activeBadgeFilter));
+                const matchSearch = r.title.toLowerCase().includes(searchVal) || 
+                                    r.author.toLowerCase().includes(searchVal) ||
+                                    r.description.toLowerCase().includes(searchVal);
+                return matchCat && matchBadge && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-stone-500 glass-panel rounded-2xl">
+                        <i data-lucide="coffee-off" class="w-10 h-10 mx-auto mb-2 text-stone-600"></i>
+                        <p class="text-sm">조건에 맞는 레시피를 찾을 수 없습니다.</p>
+                    </div>
+                `;
+            } else {
+                grid.innerHTML = filtered.map(r => {
+                    const totalSecs = r.steps.reduce((acc, s) => acc + s.timeSec, 0);
+                    const mins = Math.floor(totalSecs / 60);
+                    const secs = totalSecs % 60;
+                    const timeStr = `${mins > 0 ? mins + '분 ' : ''}${secs}초`;
+
+                    return `
+                        <div class="glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="px-2.5 py-0.5 rounded-full bg-coffee-950 text-coffee-300 text-[11px] font-semibold border border-coffee-800/80">
+                                        ${r.method}
+                                    </span>
+                                    <span class="text-xs text-stone-400 flex items-center gap-1">
+                                        <i data-lucide="clock" class="w-3.5 h-3.5"></i> ${timeStr}
+                                    </span>
+                                </div>
+                                <h3 class="font-extrabold text-stone-100 text-base mb-1 hover:text-coffee-300 transition cursor-pointer" onclick="selectAndLoadRecipe('${r.id}')">
+                                    ${r.title}
+                                </h3>
+                                <p class="text-xs text-stone-400 font-medium mb-3">by ${r.author}</p>
+                                <p class="text-xs text-stone-300 leading-relaxed line-clamp-2 mb-3">
+                                    ${r.description}
+                                </p>
+                                <div class="flex flex-wrap gap-1 mb-2">
+                                    ${(r.tags || []).map(t => `<span class="text-[10px] px-1.5 py-0.5 rounded bg-stone-900 text-coffee-400">${t}</span>`).join('')}
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-t border-stone-800/80 flex items-center justify-between">
+                                <div class="text-xs text-stone-400">
+                                    <span>기본: </span>
+                                    <span class="font-bold text-stone-200">${r.baseCoffeeGrams}g</span> / 
+                                    <span class="font-bold text-amber-400">${r.baseWaterGrams}g</span>
+                                </div>
+                                <button onclick="selectAndLoadRecipe('${r.id}')" class="px-3 py-1.5 rounded-xl bg-coffee-600 hover:bg-coffee-500 text-white text-xs font-bold flex items-center gap-1 transition shadow">
+                                    <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> 타이머 로드
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            lucide.createIcons();
+        }
+
+        function pickRandomRecipe() {
+            if (state.recipes.length === 0) return;
+            const randIdx = Math.floor(Math.random() * state.recipes.length);
+            const chosen = state.recipes[randIdx];
+            selectAndLoadRecipe(chosen.id);
+            speakKorean(`오늘의 추천 레시피는 ${chosen.author}의 ${chosen.title} 입니다.`);
+        }
+
+        function selectAndLoadRecipe(id) {
+            const r = state.recipes.find(item => item.id === id);
+            if (!r) return;
+            loadRecipeToTimer(r);
+            switchTab('timer');
+        }
+
+        /* ==========================================================================
+           6. RECIPE DOSAGE & RATIO SCALER & TIMER ENGINE
+           ========================================================================== */
+        function loadRecipeToTimer(recipe) {
+            state.selectedRecipe = recipe;
+            state.scaledCoffee = recipe.baseCoffeeGrams;
+            
+            // Calculate ratio
+            const ratio = (recipe.baseWaterGrams / recipe.baseCoffeeGrams).toFixed(1);
+            state.scaledRatio = parseFloat(ratio);
+
+            document.getElementById('timer-recipe-method').innerText = recipe.method;
+            document.getElementById('timer-recipe-author').innerText = recipe.author;
+            document.getElementById('timer-recipe-title').innerText = recipe.title;
+            document.getElementById('timer-recipe-desc').innerText = recipe.description;
+
+            document.getElementById('scale-coffee-input').value = state.scaledCoffee;
+            document.getElementById('scale-ratio-input').value = state.scaledRatio;
+
+            updateRecipeScaling();
+            resetTimer();
+        }
+
+        function resetScaling() {
+            if (!state.selectedRecipe) return;
+            loadRecipeToTimer(state.selectedRecipe);
+        }
+
+        function updateRecipeScaling() {
+            if (!state.selectedRecipe) return;
+            
+            const coffeeVal = parseFloat(document.getElementById('scale-coffee-input').value) || state.selectedRecipe.baseCoffeeGrams;
+            const ratioVal = parseFloat(document.getElementById('scale-ratio-input').value) || 15;
+
+            state.scaledCoffee = coffeeVal;
+            state.scaledRatio = ratioVal;
+
+            const totalWater = Math.round(coffeeVal * ratioVal);
+            document.getElementById('scaled-total-water').innerText = `${totalWater}g`;
+            document.getElementById('scaled-temp').innerText = `${state.selectedRecipe.temp}°C`;
+            document.getElementById('scaled-micron').innerText = `${state.selectedRecipe.targetMicron}µm`;
+
+            // Update timer display if timer not currently running
+            if (!state.timerRunning) {
+                updateStepDisplay();
+            }
+        }
+
+        function getScaledSteps() {
+            if (!state.selectedRecipe) return [];
+            const scaleFactor = state.scaledCoffee / state.selectedRecipe.baseCoffeeGrams;
+            
+            return state.selectedRecipe.steps.map(step => ({
+                ...step,
+                scaledWater: Math.round(step.waterGrams * scaleFactor)
+            }));
+        }
+
+        /* ==========================================================================
+           7. INTERACTIVE BREW TIMER CONTROLLER
+           ========================================================================== */
+        function updateStepDisplay() {
+            const steps = getScaledSteps();
+            if (steps.length === 0) return;
+
+            const current = steps[state.currentStepIdx] || steps[0];
+            const totalSteps = steps.length;
+
+            document.getElementById('timer-step-badge').innerText = `Step ${state.currentStepIdx + 1} / ${totalSteps}`;
+            document.getElementById('timer-step-title').innerHTML = `<i data-lucide="droplet" class="w-4 h-4 text-amber-400"></i> 단계 ${state.currentStepIdx + 1}: ${current.instruction.split(':')[0] || '푸어링'}`;
+            
+            // Calculate step water and total accumulated water up to this step
+            const totalTargetWater = Math.round(state.scaledCoffee * state.scaledRatio);
+            document.getElementById('timer-step-water-target').innerText = `목표 누적 물: ${current.scaledWater}g (전체 ${totalTargetWater}g)`;
+            document.getElementById('timer-step-instruction').innerText = current.instruction;
+
+            // Water progress bar
+            const pct = Math.min(100, Math.round((current.scaledWater / totalTargetWater) * 100));
+            document.getElementById('timer-water-bar').style.width = `${pct}%`;
+            document.getElementById('timer-water-progress-text').innerText = `${current.scaledWater}g / ${totalTargetWater}g (${pct}%)`;
+
+            // Times
+            if (!state.timerRunning) {
+                state.stepTimeRemaining = current.timeSec;
+                
+                // Calculate total remaining
+                const remainingSecs = steps.slice(state.currentStepIdx).reduce((acc, s) => acc + s.timeSec, 0);
+                state.totalTimeRemaining = remainingSecs;
+                state.totalRecipeSecs = steps.reduce((acc, s) => acc + s.timeSec, 0);
+
+                renderTimeText(state.stepTimeRemaining, state.totalTimeRemaining);
+                updateProgressCircle(1);
+            }
+            lucide.createIcons();
+        }
+
+        function renderTimeText(stepSec, totalSec) {
+            const sMins = String(Math.floor(stepSec / 60)).padStart(2, '0');
+            const sSecs = String(stepSec % 60).padStart(2, '0');
+            document.getElementById('timer-main-clock').innerText = `${sMins}:${sSecs}`;
+
+            const tMins = String(Math.floor(totalSec / 60)).padStart(2, '0');
+            const tSecs = String(totalSec % 60).padStart(2, '0');
+            document.getElementById('timer-total-remaining').innerText = `${tMins}:${tSecs}`;
+        }
+
+        function updateProgressCircle(fraction) {
+            const circle = document.getElementById('timer-progress-circle');
+            const circumference = 2 * Math.PI * 88; // r=88 -> ~552.92
+            const offset = circumference * (1 - fraction);
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function toggleTimer() {
+            if (state.timerRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (!state.selectedRecipe) return;
+            state.timerRunning = true;
+            state.timerPaused = false;
+
+            document.getElementById('btn-timer-text').innerText = '일시 정지';
+            document.getElementById('btn-timer-icon').setAttribute('data-lucide', 'pause');
+            lucide.createIcons();
+
+            const steps = getScaledSteps();
+            const currentStep = steps[state.currentStepIdx];
+
+            playChime('step');
+            speakKorean(`${state.currentStepIdx + 1}단계 시작. ${currentStep.instruction}`);
+
+            state.timerInterval = setInterval(() => {
+                if (state.stepTimeRemaining > 0) {
+                    state.stepTimeRemaining--;
+                    state.totalTimeRemaining--;
+
+                    // Speak countdown warnings
+                    if (state.stepTimeRemaining === 5 && state.stepTimeRemaining < currentStep.timeSec) {
+                        speakKorean('5초 전');
+                    }
+
+                    renderTimeText(state.stepTimeRemaining, state.totalTimeRemaining);
+                    
+                    const fraction = state.stepTimeRemaining / currentStep.timeSec;
+                    updateProgressCircle(fraction);
+                } else {
+                    // Step Complete! Move to next
+                    if (state.currentStepIdx < steps.length - 1) {
+                        state.currentStepIdx++;
+                        const nextStepObj = steps[state.currentStepIdx];
+                        state.stepTimeRemaining = nextStepObj.timeSec;
+                        updateStepDisplay();
+                        playChime('step');
+                        speakKorean(`${state.currentStepIdx + 1}단계. ${nextStepObj.instruction}`);
+                    } else {
+                        // All Steps Complete
+                        finishTimer();
+                    }
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            state.timerRunning = false;
+            state.timerPaused = true;
+            clearInterval(state.timerInterval);
+
+            document.getElementById('btn-timer-text').innerText = '계속 진행';
+            document.getElementById('btn-timer-icon').setAttribute('data-lucide', 'play');
+            lucide.createIcons();
+        }
+
+        function nextStep() {
+            const steps = getScaledSteps();
+            if (state.currentStepIdx < steps.length - 1) {
+                const wasRunning = state.timerRunning;
+                if (wasRunning) clearInterval(state.timerInterval);
+                
+                state.currentStepIdx++;
+                state.stepTimeRemaining = steps[state.currentStepIdx].timeSec;
+                updateStepDisplay();
+
+                if (wasRunning) startTimer();
+            }
+        }
+
+        function prevStep() {
+            const steps = getScaledSteps();
+            if (state.currentStepIdx > 0) {
+                const wasRunning = state.timerRunning;
+                if (wasRunning) clearInterval(state.timerInterval);
+                
+                state.currentStepIdx--;
+                state.stepTimeRemaining = steps[state.currentStepIdx].timeSec;
+                updateStepDisplay();
+
+                if (wasRunning) startTimer();
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(state.timerInterval);
+            state.timerRunning = false;
+            state.timerPaused = false;
+            state.currentStepIdx = 0;
+
+            document.getElementById('btn-timer-text').innerText = '추출 시작';
+            document.getElementById('btn-timer-icon').setAttribute('data-lucide', 'play');
+            lucide.createIcons();
+
+            updateStepDisplay();
+        }
+
+        function finishTimer() {
+            clearInterval(state.timerInterval);
+            state.timerRunning = false;
+            
+            playChime('finish');
+            speakKorean('추출이 모두 완료되었습니다! 갓 내린 커피의 향미를 즐겨보세요.');
+
+            document.getElementById('timer-main-clock').innerText = '완료!';
+            document.getElementById('btn-timer-text').innerText = '다시 시작';
+            document.getElementById('btn-timer-icon').setAttribute('data-lucide', 'rotate-ccw');
+            lucide.createIcons();
+        }
+
+        /* ==========================================================================
+           8. FEMOBOOK A2 & GRINDER MICROMETER CONVERTER
+           ========================================================================== */
+        function onGrinderSliderChange(val) {
+            state.currentMicron = parseInt(val);
+            document.getElementById('calc-micron-display').innerText = val;
+            updateGrinderCalculations(parseInt(val));
+        }
+
+        function setMicronPreset(micron) {
+            document.getElementById('grinder-range-input').value = micron;
+            onGrinderSliderChange(micron);
+        }
+
+        function updateGrinderCalculations(micron) {
+            // Femobook A2: 18µm per click, 40 clicks per rotation (720µm)
+            const femobookTotalClicks = Math.round(micron / 18);
+            const femobookRots = Math.floor(femobookTotalClicks / 40);
+            const femobookClicks = femobookTotalClicks % 40;
+            document.getElementById('res-femobook').innerText = 
+                `${femobookRots > 0 ? femobookRots + '회전 ' : ''}${femobookClicks}클릭 (총 ${femobookTotalClicks}클릭)`;
+
+            // Comandante C40: ~30µm per click
+            const comandanteClicks = Math.round(micron / 30);
+            document.getElementById('res-comandante').innerText = `${comandanteClicks} 클릭`;
+
+            // Timemore C2/C3: ~22µm per click
+            const timemoreClicks = Math.round(micron / 22);
+            document.getElementById('res-timemore').innerText = `${timemoreClicks} 클릭`;
+
+            // Baratza Encore: ~20µm per step (0-40 range)
+            const encoreStep = Math.min(40, Math.max(1, Math.round(micron / 20)));
+            document.getElementById('res-encore').innerText = `${encoreStep} 단`;
+
+            // Fellow Ode Gen 2: ~16.6µm per step adjustment
+            // 1.0 setting corresponds to ~300µm
+            const odeSetting = (1.0 + (micron - 300) / 50).toFixed(1);
+            const odeClamped = Math.min(11.0, Math.max(1.0, parseFloat(odeSetting)));
+            document.getElementById('res-ode2').innerText = `${odeClamped} 다이얼`;
+
+            // EK43: ~35µm per setting unit
+            const ekSetting = (micron / 90).toFixed(1);
+            document.getElementById('res-ek43').innerText = `${ekSetting} 설정`;
+        }
+
+        /* ==========================================================================
+           9. TASTING LOG JOURNAL (LOCALSTORAGE)
+           ========================================================================== */
+        function getJournalLogs() {
+            const logs = localStorage.getItem('coffee_studio_tasting_logs');
+            return logs ? JSON.parse(logs) : [];
+        }
+
+        function renderJournalList() {
+            const logs = getJournalLogs();
+            const container = document.getElementById('journal-list');
+
+            if (logs.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-stone-500 glass-panel rounded-2xl">
+                        <i data-lucide="book-open" class="w-10 h-10 mx-auto mb-2 text-stone-600"></i>
+                        <p class="text-sm">저장된 시음 노트가 없습니다. 첫 시음기를 작성해보세요!</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = logs.map((log, idx) => `
+                    <div class="glass-card rounded-2xl p-5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-stone-400 font-medium">${log.date}</span>
+                            <span class="text-amber-400 text-xs font-bold">${'★'.repeat(log.rating)}${'☆'.repeat(5 - log.rating)}</span>
+                        </div>
+                        <h4 class="font-bold text-stone-100 text-base">${log.bean}</h4>
+                        <div class="text-xs text-coffee-300">사용 레시피: ${log.recipeName}</div>
+                        
+                        <div class="grid grid-cols-3 gap-2 bg-stone-900/60 p-2 rounded-xl text-center text-[11px]">
+                            <div><span class="text-stone-500 block">산미</span><span class="font-bold text-amber-300">${log.acidity}/5</span></div>
+                            <div><span class="text-stone-500 block">단맛</span><span class="font-bold text-amber-300">${log.sweetness}/5</span></div>
+                            <div><span class="text-stone-500 block">바디감</span><span class="font-bold text-amber-300">${log.body}/5</span></div>
+                        </div>
+
+                        <p class="text-xs text-stone-300 leading-relaxed bg-stone-950/40 p-3 rounded-xl">
+                            ${log.notes}
+                        </p>
+
+                        <div class="flex justify-end">
+                            <button onclick="deleteJournalEntry(${idx})" class="text-[11px] text-red-400 hover:text-red-300">삭제</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            lucide.createIcons();
+        }
+
+        function openNewJournalModal() {
+            if (state.selectedRecipe) {
+                document.getElementById('log-recipe-name').value = state.selectedRecipe.title;
+            }
+            document.getElementById('journal-modal').classList.remove('hidden');
+        }
+
+        function openQuickLogModal() {
+            openNewJournalModal();
+        }
+
+        function closeJournalModal() {
+            document.getElementById('journal-modal').classList.add('hidden');
+        }
+
+        function saveJournalEntry(e) {
+            e.preventDefault();
+            const logs = getJournalLogs();
+            const newEntry = {
+                date: new Date().toLocaleDateString('ko-KR'),
+                bean: document.getElementById('log-bean').value,
+                recipeName: document.getElementById('log-recipe-name').value || '자유 추출',
+                rating: parseInt(document.getElementById('log-rating').value),
+                acidity: parseInt(document.getElementById('log-acidity').value),
+                sweetness: parseInt(document.getElementById('log-sweetness').value),
+                body: parseInt(document.getElementById('log-body').value),
+                notes: document.getElementById('log-notes').value
+            };
+
+            logs.unshift(newEntry);
+            localStorage.setItem('coffee_studio_tasting_logs', JSON.stringify(logs));
+            closeJournalModal();
+            switchTab('journal');
+        }
+
+        function deleteJournalEntry(idx) {
+            const logs = getJournalLogs();
+            logs.splice(idx, 1);
+            localStorage.setItem('coffee_studio_tasting_logs', JSON.stringify(logs));
+            renderJournalList();
+        }
+
+        /* ==========================================================================
+           10. CUSTOM RECIPE BUILDER
+           ========================================================================== */
+        function addBuilderStep() {
+            const container = document.getElementById('builder-steps-container');
+            const stepIdx = container.children.length + 1;
+
+            const stepRow = document.createElement('div');
+            stepRow.className = 'flex items-center gap-2 bg-stone-900/80 p-2.5 rounded-xl border border-stone-800';
+            stepRow.innerHTML = `
+                <span class="text-xs font-bold text-coffee-400 w-6">${stepIdx}.</span>
+                <input type="number" placeholder="시간(초)" min="5" value="30" class="builder-step-time w-20 bg-stone-950 border border-stone-800 rounded-lg px-2 py-1 text-xs text-stone-100">
+                <input type="number" placeholder="누적 물(g)" min="10" value="${stepIdx * 50}" class="builder-step-water w-24 bg-stone-950 border border-stone-800 rounded-lg px-2 py-1 text-xs text-amber-300 font-bold">
+                <input type="text" placeholder="지시 사항 (예: 50g 붓고 뜸들이기)" class="builder-step-desc flex-1 bg-stone-950 border border-stone-800 rounded-lg px-2.5 py-1 text-xs text-stone-100">
+                <button type="button" onclick="this.parentElement.remove()" class="p-1 text-stone-500 hover:text-red-400">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            `;
+            container.appendChild(stepRow);
+            lucide.createIcons();
+        }
+
+        function saveCustomRecipe(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('builder-title').value;
+            const author = document.getElementById('builder-author').value;
+            const method = document.getElementById('builder-method').value;
+            const coffee = parseFloat(document.getElementById('builder-coffee').value);
+            const temp = parseInt(document.getElementById('builder-temp').value);
+            const micron = parseInt(document.getElementById('builder-micron').value);
+            const desc = document.getElementById('builder-desc').value;
+
+            // Collect step rows
+            const stepRows = document.querySelectorAll('#builder-steps-container > div');
+            const steps = Array.from(stepRows).map(row => {
+                const timeSec = parseInt(row.querySelector('.builder-step-time').value) || 30;
+                const waterGrams = parseInt(row.querySelector('.builder-step-water').value) || 50;
+                const instruction = row.querySelector('.builder-step-desc').value || '물 붓기';
+                return { timeSec, waterGrams, instruction };
+            });
+
+            if (steps.length === 0) {
+                alert('최소 1개 이상의 추출 단계를 추가해주세요.');
+                return;
+            }
+
+            const maxWater = steps[steps.length - 1].waterGrams;
+
+            const newRecipe = {
+                id: 'custom-' + Date.now(),
+                title: title,
+                author: author,
+                method: method,
+                baseCoffeeGrams: coffee,
+                baseWaterGrams: maxWater,
+                bypassWaterGrams: 0,
+                temp: temp,
+                targetMicron: micron,
+                tags: ['#커스텀', `#${method}`],
+                description: desc || '나만의 커스텀 커스텀 추출 레시피',
+                steps: steps
+            };
+
+            // Save custom recipe to localStorage
+            const stored = localStorage.getItem('coffee_studio_custom_recipes');
+            const customList = stored ? JSON.parse(stored) : [];
+            customList.push(newRecipe);
+            localStorage.setItem('coffee_studio_custom_recipes', JSON.stringify(customList));
+
+            // Reload state and view
+            loadStoredRecipes();
+            initCategoryFilters();
+            filterRecipes();
+
+            // Load to timer directly
+            selectAndLoadRecipe(newRecipe.id);
+        }
+    </script>
+</body>
+</html>
